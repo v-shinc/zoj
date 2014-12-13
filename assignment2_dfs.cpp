@@ -5,17 +5,22 @@
 #include<queue>
 #pragma warning(disable:4996)
 using namespace std;
-const int MAX = 50;
+const int MAX = 50;//顶点数
 const int INF = 10000000;
 const int s = 0, t = 49;
-int m1[MAX][MAX],m2[MAX][MAX];
-int a[MAX], b[MAX];
+int m1[MAX][MAX]; //城市间长度矩阵
+int m2[MAX][MAX]; //养路费用矩阵
+int a[MAX];       //到终点城市最短距离（不考虑养路费）
+int b[MAX];       //到终点城市最小养路费
 
 
-int vis[MAX],path[MAX],bestPath[MAX],bestDist,fee,len;
-int dij[MAX];
-void DFS(int cur,int dis,int cos,int l){
-	
+int vis[MAX];
+int path[MAX];
+int bestPath[MAX];//最有路径
+int bestDist;     //起点到终点最短距离（考虑养路费）上界
+int fee, len;
+void DFS(int cur, int dis, int cos, int l){
+
 	if (cur == t){
 		if (dis < bestDist){
 			for (int i = 0; i < l; i++)
@@ -23,7 +28,7 @@ void DFS(int cur,int dis,int cos,int l){
 			bestDist = dis;
 			fee = cos;
 			len = l;
-			
+
 		}
 		return;
 	}
@@ -31,7 +36,8 @@ void DFS(int cur,int dis,int cos,int l){
 		if (vis[i])continue;
 		if (m1[cur][i] == 9999)
 			continue;
-		if (dis+m1[cur][i] + dij[i] > bestDist || cos + m2[cur][i]+ b[i] > 1500)
+		//已经过的距离+剩余距离下界>距离上界 或 已花费的养路费 + 养路费下界 > 养路费上界 则剪枝
+		if (dis + m1[cur][i] + a[i] > bestDist || cos + m2[cur][i] + b[i] > 1500)
 			continue;
 		path[l] = i;
 		vis[i] = 1;
@@ -40,7 +46,7 @@ void DFS(int cur,int dis,int cos,int l){
 	}
 }
 
-void dijkstra(int *d,int m[MAX][MAX],int t){
+void dijkstra(int *d, int m[MAX][MAX], int t){
 	memset(vis, 0, sizeof(vis));
 	for (int i = 0; i < MAX; i++)
 		d[i] = INF;
@@ -62,29 +68,27 @@ void dijkstra(int *d,int m[MAX][MAX],int t){
 int main(){
 	char * distFile = "m1.txt";
 	char * costFile = "m2.txt";
-	FILE *dist = fopen(distFile,"r");
+	FILE *dist = fopen(distFile, "r");
 	FILE *cost = fopen(costFile, "r");
 	for (int i = 0; i < MAX; i++)
-		for (int j = 0; j < MAX; j++){
+		for (int j = 0; j < MAX; j++)
 			fscanf(dist, "%d", &m1[i][j]);
-		}
-			
+
 	for (int i = 0; i < MAX; i++)
 		for (int j = 0; j < MAX; j++)
 			fscanf(cost, "%d", &m2[i][j]);
-	//floyd();
+
 	bestDist = INF;
 	vis[0] = 1;
-	memset(vis, 0, sizeof(vis));
+	path[0] = 0;
 	dijkstra(a, m1, t);
-	memset(vis, 0, sizeof(vis));
 	dijkstra(b, m2, t);
 	memset(vis, 0, sizeof(vis));
-	DFS(0, 0, 0, 0);
+	DFS(0, 0, 0, 1);
 	for (int i = 0; i < len; i++)
 		printf("%d ", bestPath[i]);
 	printf("\n%d %d\n", bestDist, fee);
-		
+
 	return 0;
 
 }
